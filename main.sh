@@ -3,7 +3,7 @@
 rm -rf ./tmp
 mkdir ./tmp
 
-FILES=`ls ./tests`
+FILES=`ls ./tests/*.rkt`
 
 LENGTH=`echo $FILES | wc -w`
 PASSED="0"
@@ -14,9 +14,11 @@ ORIG_HEADER=`cat ./origTransformHeader.rkt`
 echo "Running $LENGTH tests ..."
 
 for file in $FILES; do
-  PROGRAM=`tr -cd "[:print:]\n" < "./tests/$file"`
-  ORIG="./tmp/$file.o.rkt"
-  TRAN="./tmp/$file.t.rkt"
+  PROGRAM=`tr -cd "[:print:]\n" < "$file"`
+  file_name=$(echo $file | cut -d'/' -f3)
+  ORIG="./tmp/$file_name.o.rkt"
+  TRAN="./tmp/$file_name.t.rkt"
+  HASKELL_FILE="./tmp/$file_name.hs"
 
   # headers for the language
   echo "#!/usr/bin/racket" > "$ORIG"
@@ -34,6 +36,7 @@ for file in $FILES; do
   echo "import Control.Monad
         import System.IO
         (forM_ [stdout, stderr] . flip hPutStrLn) $ show $ cpsTransformProgS $ (Prog $HASKELL)" | ghci -i.. Chups 2>> "$TRAN" 1>/dev/null
+  echo "$HASKELL" > "$HASKELL_FILE"
 
   ORIG_RESULT=`racket "$ORIG"`
   TRANSFORMED_RESULT=`racket "$TRAN"`
